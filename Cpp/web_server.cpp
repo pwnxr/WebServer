@@ -4,12 +4,6 @@
 using namespace std;
 
 int main(){
-    ifstream users("users.txt");
-    ifstream passwords("pass.txt");
-
-    string user, pass;
-    users >> user, passwords >> pass;
-
     // create socket
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     
@@ -32,7 +26,7 @@ int main(){
 
         // read request
         char buffer[2048] = {0};
-        read(new_socket, buffer, 1024);
+        read(new_socket, buffer, 2047);
         cout << "Request received:\n" << buffer << '\n';
 
         // extract user & pass
@@ -42,12 +36,25 @@ int main(){
             string body = request.substr(body_pos + 4);
             cout << "Extracted Body: " << body << '\n';
 
+            bool loged_in = false;
             size_t user_start = body.find("user=");
             size_t pass_start = body.find("&pass=");
             if (user_start != string::npos && pass_start != string::npos) {
                 string user_input = body.substr(user_start + 5, pass_start - (user_start + 5));
                 string pass_input = body.substr(pass_start + 6);
-                if(user_input == user && pass_input == pass){
+
+                ifstream users("users.txt");
+                ifstream passwords("pass.txt");
+                string user, pass;
+                while(users >> user && passwords >> pass){
+                    // cout << user << " : " << pass << '\n';
+                    if(user_input == user && pass_input == pass){
+                        loged_in = true;
+                        break;
+                    }
+                }
+
+                if(loged_in){
                     // send the user's file
                     ifstream user_file(user + ".txt");
                     string file_content, line;
